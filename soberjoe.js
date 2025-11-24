@@ -63,7 +63,7 @@ const server = http.createServer((req, res) => {
 
     // Give the response a moment to flush, then exit the process
     setTimeout(() => {
-      log("Exiting distiller after successful spawn.");
+      log("Sober launched, Joe is exiting...");
       process.exit(0);
     }, 1500);
   } catch (e) {
@@ -77,5 +77,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  log(`Distiller listening on http://127.0.0.1:${PORT}`);
+  log(`Joe is listening on http://127.0.0.1:${PORT}`);
 });

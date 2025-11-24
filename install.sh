@@ -1,12 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_NAME="Distiller"
-APP_ID="distiller"
+# Check if being ran with Sudo
+if [ "$(id -u)" -eq 0 ]; then
+    echo "Joe must NOT be installed as root or via sudo."
+    exit 1
+fi
+
+APP_NAME="Joe"
+APP_ID="soberjoe"
 SOBER_FLATPAK_ID="org.vinegarhq.Sober"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-INSTALL_BIN="$HOME/.local/bin"
+INSTALL_BIN="$HOME/.local/bin/soberjoe"
 DESKTOP_DIR="$HOME/.local/share/applications"
 DESKTOP_FILE="$DESKTOP_DIR/${APP_ID}.desktop"
 
@@ -17,7 +23,7 @@ echo "Installing $APP_NAME for user: $USER"
 # -------------------------------
 if command -v flatpak >/dev/null 2>&1; then
   if flatpak info "$SOBER_FLATPAK_ID" >/dev/null 2>&1; then
-    echo "Sober is installed (Flatpak: $SOBER_FLATPAK_ID)"
+    echo "Sober is installed via Flatpak"
   else
     echo "Sober not found! Make sure to install it via Flatpak!"
   fi
@@ -37,58 +43,51 @@ else
 fi
 
 # -------------------------------
-# 3) Install scripts
+# 3) Install needed files
 # -------------------------------
+echo "Installing files..."
+
 mkdir -p "$INSTALL_BIN"
 
-echo "Installing scripts into: $INSTALL_BIN"
-
-# Copy JS server
-cp "$SCRIPT_DIR/distiller.js" "$INSTALL_BIN/distiller.js"
-
-# Copy wrapper and make it executable
-cp "$SCRIPT_DIR/distiller.sh" "$INSTALL_BIN/distiller.sh"
-chmod +x "$INSTALL_BIN/distiller.sh"
+cp "$SCRIPT_DIR/joe.png" "$INSTALL_BIN/soberjoe-icon.png"
+cp "$SCRIPT_DIR/soberjoe.js" "$INSTALL_BIN/soberjoe.js"
+cp "$SCRIPT_DIR/soberjoe-wrapper.sh" "$INSTALL_BIN/soberjoe-wrapper.sh"
+# Make the wrapper executable
+chmod +x "$INSTALL_BIN/soberjoe-wrapper.sh"
 
 # Patch wrapper to use detected node and correct JS path
-# This assumes the top of distiller.sh has lines starting with NODE= and SCRIPT=
-if grep -q '^NODE=' "$INSTALL_BIN/distiller.sh"; then
-  sed -i "s|^NODE=.*$|NODE=\"$NODE_BIN\"|" "$INSTALL_BIN/distiller.sh"
+# This assumes the top of soberjoe-wrapper.sh has lines starting with NODE= and SCRIPT=
+if grep -q '^NODE=' "$INSTALL_BIN/soberjoe-wrapper.sh"; then
+  sed -i "s|^NODE=.*$|NODE=\"$NODE_BIN\"|" "$INSTALL_BIN/soberjoe-wrapper.sh"
 fi
 
-if grep -q '^SCRIPT=' "$INSTALL_BIN/distiller.sh"; then
-  sed -i "s|^SCRIPT=.*$|SCRIPT=\"$INSTALL_BIN/distiller.js\"|" "$INSTALL_BIN/distiller.sh"
+if grep -q '^SCRIPT=' "$INSTALL_BIN/soberjoe-wrapper.sh"; then
+  sed -i "s|^SCRIPT=.*$|SCRIPT=\"$INSTALL_BIN/soberjoe.js\"|" "$INSTALL_BIN/soberjoe-wrapper.sh"
 fi
-
-echo "Scripts installed:"
-echo "    $INSTALL_BIN/distiller.sh"
-echo "    $INSTALL_BIN/distiller.js"
 
 # -------------------------------
 # 4) Install .desktop file
 # -------------------------------
 mkdir -p "$DESKTOP_DIR"
 
-echo "Writing desktop entry to: $DESKTOP_FILE"
-
 cat >"$DESKTOP_FILE" <<EOF
 [Desktop Entry]
 Type=Application
-Name=Distiller
-Comment=Intercepts Roblox launches Sober with proper forwarding, useful for Firefox users!
-Exec=$INSTALL_BIN/distiller.sh %u
+Name=Joe
+Comment=A Roblox URL handler that makes things work as it should, no matter what app tries to launch Sober.
+Exec=$INSTALL_BIN/soberjoe-wrapper.sh %u
 Terminal=false
 MimeType=x-scheme-handler/roblox;x-scheme-handler/roblox-player;
 Categories=Game;
 NoDisplay=true
-Icon=org.vinegarhq.Sober
+Icon=$INSTALL_BIN/soberjoe-icon.png
 EOF
 
 # -------------------------------
 # 5) Register as handler for roblox:// and roblox-player://
 # -------------------------------
 if command -v xdg-mime >/dev/null 2>&1; then
-  echo "Registering URL handlers with xdg-mime"
+  echo "Registering as default Roblox handler for: $USER"
   xdg-mime default "${APP_ID}.desktop" x-scheme-handler/roblox || true
   xdg-mime default "${APP_ID}.desktop" x-scheme-handler/roblox-player || true
 else
@@ -100,13 +99,12 @@ if command -v update-desktop-database >/dev/null 2>&1; then
   update-desktop-database "$HOME/.local/share/applications" || true
 fi
 
-clear
 echo
 echo "Done!"
 echo
-echo "Installed scripts at:  $INSTALL_BIN"
+echo "Installed at:  $INSTALL_BIN"
 echo "Desktop file is at:  $DESKTOP_FILE"
 echo
-echo "If roblox:// links aren't opening in Distiller yet, try logging out and back in,"
-echo "or set the handler manually in your desktop's 'Default Applications' / 'URL Handlers' settings."
+echo "If Roblox links aren't opening with Joe yet, make sure it's set as the default"
+echo "handler in your desktop's 'Default Applications' settings. If it is, try logging out then back in."
 echo

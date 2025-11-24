@@ -2,9 +2,9 @@
 
 # Absolute paths so .desktop environment doesn't break things
 NODE="/usr/bin/node"  # run `which node` and update this if needed
-SCRIPT="/home/kckarnige/bin/distiller.js"
+SCRIPT="$HOME/bin/soberjoe/soberjoe.js"
 
-LOG="$HOME/.local/share/distiller-wrapper.log"
+LOG="$HOME/.local/share/soberjoe-wrapper.log"
 mkdir -p "$(dirname "$LOG")"
 
 ts() { date +"%Y-%m-%d %H:%M:%S"; }
@@ -26,6 +26,6 @@ sleep 0.2
 
 # Hit the local join endpoint
 curl -s "http://127.0.0.1:27870/join?url=${URL}" >/dev/null 2>&1 &
-echo "[$(ts)] Sent request to distiller server." >> "$LOG"
+echo "[$(ts)] Sent request to Joe." >> "$LOG"
 
 exit 0
