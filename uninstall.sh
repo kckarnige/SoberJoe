@@ -25,6 +25,11 @@ if [ -f "$HOME/.local/share/applications/$SOBER_ID.desktop" ]; then
   sed -i "/^#MimeType=.*x-scheme-handler\/roblox/s/^#//" "$HOME/.local/share/applications/$SOBER_ID.desktop"
 fi
 
+if command -v update-desktop-database >/dev/null 2>&1; then
+  rm ~/.local/share/applications/mimeinfo.cache || true
+  update-desktop-database ~/.local/share/applications || true
+fi
+
 echo
 echo "Done!"
 echo
